@@ -1,0 +1,3 @@
+.gitignore.local
+shell.nix
+tests

@@ -17,6 +17,8 @@ in pkgs.mkShell {
 
   shellHook = ''
     export PATH=$(yarn bin):$PATH
+    alias pack='npm pack'
+    alias build='npm run build'
     alias test='jest --watch'
 
     echo-shortcuts ${__curPos.file}
