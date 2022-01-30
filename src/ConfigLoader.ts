@@ -1,10 +1,9 @@
 import { resolve } from "path"
-import * as fs from "fs"
 import { config } from "dotenv"
-import dotenvExpand from 'dotenv-expand'
 import { loadDefaults } from './SchemaUtils'
-import Ajv from 'ajv'
 import { JSONSchema7 } from "json-schema"
+import dotenvExpand from 'dotenv-expand'
+import Ajv from 'ajv'
 
 
 export function jsonStringify(object: Object, indent: number = null) {
@@ -16,6 +15,19 @@ export function jsonStringify(object: Object, indent: number = null) {
     );
 }
 
+function _loadDotEnv(dotEnvPath: string) {
+    try {
+        const fs = require('fs')
+        if (!fs.existsSync(dotEnvPath)) {
+            console.warn(`no dotenv file found in ${dotEnvPath}`)
+        }
+        return dotenvExpand(config({ path: dotEnvPath })).parsed ?? {}
+    } catch (e) {
+        console.warn('could not load fs module', e)
+    }
+    return {}
+}
+
 export class ConfigLoader<IConfigInterface> {
     public readonly dotEnvPath: string
 
@@ -23,22 +35,14 @@ export class ConfigLoader<IConfigInterface> {
         this.dotEnvPath = dotEnvPath ?? resolve(process.cwd(), ".env")
     }
 
-    _getEnv() {
-        if (!fs.existsSync(this.dotEnvPath)) {
-            console.warn(`no dotenv file found in ${this.dotEnvPath}`)
-            return {}
-        }
-        return dotenvExpand(config({ path: this.dotEnvPath })).parsed ?? {}
-    }
-
     loadConfig(baseConfig: Record<string, any> = null): IConfigInterface {
-        const processEnv = process.env
+        const processEnv = typeof process !== 'undefined' ? process.env : {}
 
         let ajv = new Ajv()
         let validator = ajv.compile(this.configSchema)
         let mergedConfig = <IConfigInterface>{
             ...loadDefaults(this.configSchema),
-            ...(baseConfig != null ? baseConfig : this._getEnv()),
+            ...(baseConfig != null ? baseConfig : _loadDotEnv(this.dotEnvPath)),
         }
         Object.keys(this.configSchema.properties).forEach((key) => {
             let value = processEnv[key] || mergedConfig[key]
@@ -73,7 +77,7 @@ export class ConfigLoader<IConfigInterface> {
     }
 
     checkEnv(): Array<string> {
-        let env = this._getEnv()
+        let env = _loadDotEnv(this.dotEnvPath)
         let warnings = []
         Object.keys(env || {}).forEach((key) => {
             if (!this.configSchema.properties[key]) {

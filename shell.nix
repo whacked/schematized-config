@@ -21,6 +21,8 @@ in pkgs.mkShell {
     alias build='npm run build'
     alias test='jest --watch'
 
+    echo 'run `npm publish` to publish the library'
+
     echo-shortcuts ${__curPos.file}
   '';
 }
