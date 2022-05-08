@@ -9,6 +9,8 @@ in pkgs.mkShell {
   buildInputs = [
     pkgs.jsonnet
     pkgs.yarn
+    pkgs.nodejs
+    pkgs.gnumake
   ];
 
   nativeBuildInputs = [
