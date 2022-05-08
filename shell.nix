@@ -2,8 +2,8 @@
 
 let
   nixShortcuts = (builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/whacked/setup/599e7f6343a80a58ebb1204e305b19e86ce8483e/bash/nix_shortcuts.sh";
-    sha256 = "0krdhp4p9iq75b5l5s6i5fiqpxa5zzsf1flzsyl6cl4s0g9y9wwn";
+    url = "https://raw.githubusercontent.com/whacked/setup/ff0df8b82d8d93c994d426535184151ac2f2a6a2/bash/nix_shortcuts.sh";
+    sha256 = "02n805ja9haiiym8h3hsx1g6ajgbfzg9bywi6phr00d77mylr3s5";
   });
 in pkgs.mkShell {
   buildInputs = [
@@ -19,12 +19,30 @@ in pkgs.mkShell {
 
   shellHook = ''
     export PATH=$(yarn bin):$PATH
-    alias pack='npm pack'
     alias build='npm run build'
     alias test='jest --watch'
 
-    echo 'run `npm publish` to publish the library'
+    prepublish() {  # prepare for publishing to npmjs
+        cd $(dirname "${__curPos.file}")
+        if [ -e dist ]; then rm -rf dist; fi
+        npm run build
+        cp package.json dist/src
+        cd dist/src
 
-    echo-shortcuts ${__curPos.file}
+        npm publish --dry-run
+        echo 'run `npm publish` from dist/src to publish the library'
+    }
+
+    pack() {  # generate tgz bundle for local file install
+        if [ ! -e dist ]; then prepublish; fi
+        working_dir=$(dirname "${__curPos.file}")
+        pushd $working_dir/dist/src > /dev/null
+            npm pack
+            mv schematized-config*.tgz $working_dir/
+            ls -l $working_dir/*.tgz
+        popd > /dev/null
+    }
+
+    echo-shortcuts "${__curPos.file}"
   '';
 }
