@@ -31,11 +31,19 @@ function _loadDotEnv(dotEnvPath: string) {
 export class ConfigLoader<IConfigInterface> {
     public readonly dotEnvPath: string
 
+    /**
+     * NOTE: configSchema can be any JSONSchema7-conforming object.
+     * we will have to change this sig because JSONSchema7 leads to weird
+     * compile-time typing errors in practice:
+     *     Type 'string' is not assignable to type 'JSONSchema7TypeName | JSONSchema7TypeName[]'.ts(2345)
+     * If you have a plain object that's failing the type check, for now,
+     * type cast it directly using `any` or `JSONSchema7`
+     */
     constructor(public readonly configSchema: JSONSchema7, dotEnvPath: string = null) {
         this.dotEnvPath = dotEnvPath ?? resolve(process.cwd(), ".env")
     }
 
-    loadConfig(baseConfig: Record<string, any> = null): IConfigInterface {
+    loadConfig(baseConfig: Record<string, any> = null, namespaceAncestry: Array<string> = null): IConfigInterface {
         const processEnv = typeof process !== 'undefined' ? process.env : {}
 
         let ajv = new Ajv()
@@ -48,6 +56,10 @@ export class ConfigLoader<IConfigInterface> {
             let value = processEnv[key] || mergedConfig[key]
             let itemConfig = this.configSchema.properties[key] as JSONSchema7
             switch (itemConfig.type) {
+                case 'object':
+                    let nextNamespacePath = namespaceAncestry == null ? [key] : namespaceAncestry.concat([key])
+                    value = new ConfigLoader(itemConfig).loadConfig(value, nextNamespacePath)
+                    break
                 case 'integer':
                     value = typeof value == 'string' ? parseInt(value) : value
                     break;
@@ -64,12 +76,20 @@ export class ConfigLoader<IConfigInterface> {
                 default:
                     break;
             }
-            mergedConfig[key] = (value != null && !Number.isNaN(value)) ? value : mergedConfig[key]
+
+            if (value != null && !Number.isNaN(value)) {
+                mergedConfig[key] = value
+            } else if (mergedConfig[key] == null) {
+                delete mergedConfig[key]
+            }
         })
         validator(mergedConfig)
         if (validator.errors) {
             validator.errors.forEach((error) => {
-                console.warn(`validation failure:`, error)
+                console.warn(`validation failure${namespaceAncestry == null
+                    ? ''
+                    : ` in "${namespaceAncestry.join('/')}"`
+                    }:`, error)
             })
             throw new Error(`failed to validate schema on start`)
         }
