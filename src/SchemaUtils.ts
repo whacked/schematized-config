@@ -1,10 +1,10 @@
 import { JSONSchema7 } from "json-schema"
 
+/**
+ * load properties with "default": value set from a json schema
+ * and return it in an object
+ */
 export function loadDefaults(schema: JSONSchema7, shouldPreserveKeysWithoutDefault: boolean = false): Record<string, any> {
-    /**
-     * load properties with "default": value set from a json schema
-     * and return it in an object
-     */
     if (schema.properties == null) {
         return null
     }

@@ -2,7 +2,7 @@
   "name": "schematized-config",
   "author": "whacked",
   "license": "MIT",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": "https://github.com/whacked/schematized-config",
   "dependencies": {
     "@types/jest": "^27.0.1",
