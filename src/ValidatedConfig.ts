@@ -104,7 +104,7 @@ export class ValidatedConfig {
             incomingConfig = configSource
         }
 
-        let ajv = new Ajv()
+        let ajv = new Ajv({ strict: false })
         if (ValidatedConfig.configSchema == null) {
             console.warn('WARN: no schema is set; output will be the default config as-is')
             return processEnv as any
