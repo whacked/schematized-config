@@ -27,12 +27,12 @@ describe('test validated config', () => {
     }
 
     test('no schema, no input loads process.env', () => {
-        const myConfig = ValidatedConfig.load()
+        const myConfig = ValidatedConfig.load<any>()
         expect(myConfig['USER']).toEqual(process.env['USER'])
     })
 
     test('no schema, with process.env', () => {
-        const myConfig = ValidatedConfig.load(process.env)
+        const myConfig = ValidatedConfig.load<any>(process.env)
         expect(myConfig['USER']).toEqual(process.env['USER'])
     })
 
