@@ -2,7 +2,7 @@
   "name": "schematized-config",
   "author": "whacked",
   "license": "MIT",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": "https://github.com/whacked/schematized-config",
   "dependencies": {
     "ajv": "^8.6.3",
