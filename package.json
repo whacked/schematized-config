@@ -33,5 +33,10 @@
   "scripts": {
     "test": "ts-jest",
     "build": "tsc && tsc -p tsconfig.cjs.json && chmod +x dist/cjs/src/check-env-with-schema.js"
-  }
+  },
+  "files": [
+      "dist",
+      "README.md",
+      "LICENSE"
+  ]
 }

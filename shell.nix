@@ -24,13 +24,12 @@ in pkgs.mkShell {
 
     prepublish() {  # prepare for publishing to npmjs
         cd $(dirname "${__curPos.file}")
+        rm schematized-config-*.tgz
         if [ -e dist ]; then rm -rf dist; fi
         npm run build
-        cp package.json dist/esm/src
-        cd dist/esm/src
 
         npm publish --dry-run
-        echo 'run `npm publish` from dist/src to publish the library'
+        echo 'run `npm publish` to publish the library'
     }
 
     pack() {  # generate tgz bundle for local file install
