@@ -26,8 +26,8 @@ in pkgs.mkShell {
         cd $(dirname "${__curPos.file}")
         if [ -e dist ]; then rm -rf dist; fi
         npm run build
-        cp package.json dist/src
-        cd dist/src
+        cp package.json dist/esm/src
+        cd dist/esm/src
 
         npm publish --dry-run
         echo 'run `npm publish` from dist/src to publish the library'
@@ -36,9 +36,8 @@ in pkgs.mkShell {
     pack() {  # generate tgz bundle for local file install
         if [ ! -e dist ]; then prepublish; fi
         working_dir=$(dirname "${__curPos.file}")
-        pushd $working_dir/dist/src > /dev/null
+        pushd $working_dir > /dev/null
             npm pack
-            mv schematized-config*.tgz $working_dir/
             ls -l $working_dir/*.tgz
         popd > /dev/null
     }

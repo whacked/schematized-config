@@ -28,7 +28,7 @@ function _loadDotEnv(dotEnvPath: string) {
     return {}
 }
 
-export class ConfigLoader<IConfigInterface> {
+export class ConfigLoader<IConfigInterface> {  // FIXME deletion candidate?
     public readonly dotEnvPath: string
 
     /**

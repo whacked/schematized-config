@@ -1,7 +1,3 @@
-import 'dotenv/config'
-import { config } from 'dotenv'
-import { resolve } from "path"
-import dotenvExpand from 'dotenv-expand'
 import Ajv from 'ajv'
 import { JSONSchema7 } from "json-schema"
 import { ValidatorDotEnvConfigSchema } from './autogen/interfaces/ValidatorDotEnvConfig'
@@ -12,6 +8,24 @@ const nameof = <T>(name: keyof T) => name;
 
 const processEnv = typeof process == "undefined" ? {} : process.env
 const processCwd = typeof process == "undefined" ? null : process.cwd()
+
+/**
+ * wrapper for dotenvExpand to make it work in the browser
+ * @param config supposed to be dotenv-parsed object, i.e. { parsed: {...} }
+ * @returns dotenvExpand-like result, i.e. also { parsed: {...} }
+ */
+function dotenvExpand(config: object) {
+    if (typeof process == "undefined") {
+        // NOTE: dotenvExpand expects an object
+        // with a `parsed` property; but this conditional
+        // should ONLY get called when dotenvExpand is unavailable,
+        // i.e. in the browser; since dotenvExpand's output _also_
+        // has a `parsed` property, we return the input as-is.
+        return config
+    } else {
+        return require('dotenv-expand')(config)
+    }
+}
 
 
 export enum ValidationStrictness {
@@ -37,7 +51,6 @@ export class ValidatedConfig {
         return null
     }
 
-    static defaultConfigSourcePath = resolve(processCwd, ".env")  // FIXME for non-node interop?
     static configSchema: JSONSchema7 = null
 
     static setSchema(jsonSchemaObject: JSONSchema7 | Record<string, any>) {
@@ -77,15 +90,19 @@ export class ValidatedConfig {
     }
 
     static loadDotEnvFile<ConfigSchema>(
-        dotEnvFilePath: string = ValidatedConfig.defaultConfigSourcePath,
+        dotEnvFilePath: string | null = null,
         strictnessLevel: ValidationStrictness = null,
     ) {
+        if (dotEnvFilePath == null) {
+            dotEnvFilePath = require('path').resolve(processCwd, ".env")
+        }
+
         if (strictnessLevel == null) {
             strictnessLevel = ValidatedConfig.getEnvStrictnessLevel() ?? ValidationStrictness.WARN_ON_NONCONFORMANCE
         }
 
         return ValidatedConfig.load<ConfigSchema>(
-            dotenvExpand(config({ path: dotEnvFilePath })).parsed, strictnessLevel,
+            dotenvExpand(require('dotenv').config({ path: dotEnvFilePath })).parsed, strictnessLevel,
         )
     }
 
@@ -101,7 +118,7 @@ export class ValidatedConfig {
         } else if (typeof configSource != "object") {
             incomingConfig = processEnv
         } else {
-            incomingConfig = configSource
+            incomingConfig = dotenvExpand({ parsed: configSource }).parsed
         }
 
         let ajv = new Ajv({ strict: false })
@@ -159,6 +176,7 @@ export class ValidatedConfig {
             validator.errors.forEach((error) => {
                 console.warn(`VALIDATION FAILURE:`, error)
             })
+            console.log("MERGED CONFIG", mergedConfig)
             throw new Error(`failed to validate schema on start`)
         }
 

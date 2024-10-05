@@ -19,10 +19,14 @@ describe('test validated config', () => {
             DATABASE_NAME: {
                 type: 'string',
             },
+            ENV_USER: {
+                type: 'string',
+            },
         },
         required: [
             'FOO',
             'DATABASE_NAME',
+            'ENV_USER',
         ]
     }
 
@@ -41,15 +45,17 @@ describe('test validated config', () => {
         expect(myConfig).toEqual({})
     })
 
-    test('use arbitrary object', () => {
+    test('use arbitrary object with process.env hydration (assuming node)', () => {
         const myConfig = ValidatedConfig.setSchema(testSchema).load({
-            DATABASE_NAME: 'hello.db'
+            DATABASE_NAME: 'hello.db',
+            ENV_USER: '$USER',
         })
         expect(myConfig).toEqual({
             FOO: 'bar',
             BLUE: undefined,
             URL: undefined,
             DATABASE_NAME: 'hello.db',
+            ENV_USER: process.env['USER'],
         })
 
         // for this to throw, you must ensure .env isn't setting e.g. DATABASE_NAME
